@@ -107,7 +107,7 @@ copy_config()
                 config_dir=
             fi
 
-            gcode_dir=K1
+            gcode_dir=K1C
             ;;
 
         "CR-K1 Max")
@@ -130,6 +130,16 @@ copy_config()
             fi
 
             gcode_dir=K1_Max
+            ;;
+
+        "GS-01")
+            if [ "$board" = "CR4CU220812S12" ]; then
+                config_dir=GS_01_CR4CU220812S12
+            else
+                config_dir=
+            fi
+
+            gcode_dir=GS_01
             ;;
 
         *)

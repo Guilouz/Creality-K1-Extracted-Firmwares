@@ -303,8 +303,8 @@ class GCodeMove:
             self.extrude_factor = state['extrude_factor']
             # Restore the relative E position
             logging.info("power_loss cmd_CX_RESTORE_GCODE_STATE base_position:%s" % str(self.base_position))
-            e_diff = self.last_position[3] - state['last_position'][3] - 0.7
-            self.base_position[3] += e_diff
+            e_diff = self.last_position[3] - state['last_position'][3] - 0.7 + 5.0
+            self.base_position[3] += e_diff 
             logging.info("power_loss cmd_CX_RESTORE_GCODE_STATE self.last_position[3]:%s, state['last_position'][3]:%s, e_diff:%s, \
                          base_position[3]:%s" % (self.last_position[3], state['last_position'][3], e_diff, self.base_position[3]))
             # Move the toolhead back if requested
@@ -323,7 +323,7 @@ class GCodeMove:
             logging.info("power_loss cmd_CX_RESTORE_GCODE_STATE after BED_MESH_PROFILE LOAD='default'")
             x = self.last_position[0]
             y = self.last_position[1]
-            z = state['last_position'][2] + self.variable_safe_z + state["variable_z_safe_pause"]
+            z = state['last_position'][2] + self.variable_safe_z + state["variable_z_safe_pause"] + 0.1
             logging.info("power_loss cmd_CX_RESTORE_GCODE_STATE self.last_position[2]:%s, state['last_position'][2]:%s, self.variable_safe_z:%s, \
                 state['variable_z_safe_pause']:%s" % (self.last_position[2], state['last_position'][2], self.variable_safe_z, state["variable_z_safe_pause"]))
             toolhead = self.printer.lookup_object("toolhead")

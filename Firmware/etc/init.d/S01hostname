@@ -14,11 +14,17 @@ set_hostname_with_model_mac()
             "CR-K1")
                 model="K1"
                 ;;
+            "K1C")
+                model="K1C"
+                ;;
             "CR-K1 Max")
                 model="K1Max"
                 ;;
             "K1 Max SE")
                 model="K1MaxSE"
+                ;;
+            "GS-01")
+                model="GS01"
                 ;;
             *)
                 ;;
