@@ -1,0 +1,20 @@
+#!/bin/sh
+
+start() {
+    # 将 cpu 的优先级调低
+    devmem 0x13012038 32 0x884040c0
+
+    # 将 dpu/lcd 的优先级调高
+    devmem 0x1301202c 32 0x88404001
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    *)
+        echo "Usage: $0 {start}"
+        exit 1
+esac
+
+exit $?

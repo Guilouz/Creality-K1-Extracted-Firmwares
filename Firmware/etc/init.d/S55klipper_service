@@ -6,6 +6,8 @@
 USER_DATA=/usr/data
 PROG=/usr/share/klippy-env/bin/python
 PY_SCRIPT=/usr/share/klipper/klippy/klippy.py
+ROM_CONFIG_DIR=/usr/share/klipper/config
+ROM_GCODE_DIR=/usr/share/klipper/gcodes
 PRINTER_DATA_DIR=$USER_DATA/printer_data
 PRINTER_CONFIG_DIR=$PRINTER_DATA_DIR/config
 PRINTER_LOGS_DIR=$PRINTER_DATA_DIR/logs
@@ -154,7 +156,7 @@ copy_config()
         exit 0
     }
 
-    CONFIG_PATH=/usr/share/klipper/config/${config_dir}
+    CONFIG_PATH=$ROM_CONFIG_DIR/${config_dir}
 
     [ -d "${CONFIG_PATH}" ] || {
         echo "config_dir is not exist!"
@@ -177,23 +179,32 @@ copy_config()
                 sync
             }
         else
-            [ "x${config_dir}" != "x" -a -d "/usr/share/klipper/config/${config_dir}" ] && {
-                # keep printer.cfg
-                ls "${CONFIG_PATH}"/*.cfg | grep -v printer.cfg | xargs -I {} cp -af {} $PRINTER_CONFIG_DIR/
-                sync
-            }
+            # keep printer.cfg
+            ls "${CONFIG_PATH}"/*.cfg | grep -v printer.cfg | xargs -I {} cp -af {} $PRINTER_CONFIG_DIR/
+            sync
         fi
 
         # update printer.cfg and keep SAVE_CONFIG section
-        update_config "/usr/share/klipper/config/${config_dir}/printer.cfg" $PRINTER_CONFIG_DIR/printer.cfg
+        update_config "$CONFIG_PATH/printer.cfg" $PRINTER_CONFIG_DIR/printer.cfg
     else
         cp -af "${CONFIG_PATH}"/*.cfg $PRINTER_CONFIG_DIR/
         sync
     fi
-    [ "x${gcode_dir}" != "x" -a -d /usr/share/klipper/gcodes/${gcode_dir} ] && {
-        rsync -a /usr/share/klipper/gcodes/${gcode_dir}/* ${GCODE_FILES_DIR}/
-        sync
+
+    [ "x${gcode_dir}" = "x" ] && {
+        echo "gcode_dir is invalid!"
+        exit 0
     }
+
+    GCODE_PATH=$ROM_GCODE_DIR/${gcode_dir}
+
+    [ -d "${GCODE_PATH}" ] || {
+        echo "gcode_dir is not exist!"
+        exit 0
+    }
+
+    rsync -a $GCODE_PATH/* ${GCODE_FILES_DIR}/
+    sync
 
     # overlay printer.cfg for pcba test
     if [ "x$pcba_test" = "x1" ]; then

@@ -6,7 +6,8 @@
 
 PROG=/usr/bin/cam_app
 MJPG_STREAMER=/usr/bin/mjpg_streamer
-VERSION_FILE=/tmp/.cam_version
+TMP_VERSION_FILE=/tmp/.cam_version
+VERSION_FILE=/usr/data/creality/userdata/config/cam_version.json
 FW_ROOT_DIR=/usr/share/uvc/fw
 
 MAIN_CAM=0
@@ -20,6 +21,8 @@ SUB_PORT=8081
 SUB_PIC_WIDTH=640
 SUB_PIC_HEIGHT=480
 SUB_PIC_FPS=15
+
+TIME_OUT_CNT=15
 
 echo_console()
 {
@@ -62,6 +65,29 @@ fw_info()
             else
                 json_add_boolean "can_update" 0
             fi
+            json_close_object
+            json_dump > $TMP_VERSION_FILE
+            json_cleanup
+
+            case $ID_PATH_TAG in
+                platform-13500000_otg_new-usb-0_1_1*)
+                    power_en_pin="PA14"
+                ;;
+
+                platform-13500000_otg_new-usb-0_1_2*)
+                    power_en_pin="PA15"
+                ;;
+
+                platform-13500000_otg_new-usb-0_1_3*)
+                    power_en_pin="PA16"
+                ;;
+            esac
+
+            json_init
+            json_add_object "main_cam"
+            json_add_string "manufactory" $manufactory
+            json_add_string "cur_version" $cur_version
+            json_add_string "power_en_pin" $power_en_pin
             json_close_object
             json_dump > $VERSION_FILE
             json_cleanup
@@ -120,6 +146,7 @@ start_uvc()
 
 stop_uvc()
 {
+    local count=0
     case $1 in
         main-video* | sub-video*)
             echo_console "stop cam_app service for $1 : "
@@ -134,8 +161,14 @@ stop_uvc()
                 do
                     if [ -d /proc/$(cat /var/run/$1.pid) ]; then
                         sleep 0.2
+                        let count+=1
                     else
                         break
+                    fi
+                    # time out 3s, then send kill signal to process
+                    if [ $count -gt $TIME_OUT_CNT ]; then
+                        kill -9 $(cat /var/run/$1.pid)
+                        sleep 0.5
                     fi
                 done
 
@@ -176,7 +209,7 @@ stop_all_uvc()
     }
 }
 
-#echo_console "MDEV=$MDEV ; ACTION=$ACTION ; DEVPATH=$DEVPATH\n"
+#echo_console "MDEV=$MDEV ; ACTION=$ACTION ; DEVPATH=$DEVPATH ; ID_PATH_TAG=$ID_PATH_TAG\n"
 
 sync && echo 3 > /proc/sys/vm/drop_caches
 
@@ -187,7 +220,7 @@ add)
 remove)
         stop_uvc ${MDEV}
 
-        rm -rf $VERSION_FILE
+        rm -rf $TMP_VERSION_FILE
         ;;
 # cmd: ACTION=reload /usr/bin/auto_uvc.sh
 reload)

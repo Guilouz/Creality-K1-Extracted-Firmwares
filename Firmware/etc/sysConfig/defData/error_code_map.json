@@ -61,6 +61,7 @@
         { "fault_code":2503, "error":207 },
         { "fault_code":100,  "error":208 },
         { "fault_code":102,  "error":208 },
+        { "fault_code":114,  "error":208 },
         
         { "fault_code":505,  "error":210 },
         { "fault_code":506,  "error":210 },

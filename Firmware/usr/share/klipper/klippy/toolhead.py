@@ -649,8 +649,13 @@ class ToolHead:
             requested_accel_to_decel is None):
             gcmd.respond_info(msg, log=False)
     def cmd_M204(self, gcmd):
+        accel_S = int(float(gcmd.get('S', -1)))
+        if accel_S != -1 and accel_S <= 100:
+            accel = 100
+        else:
+            accel = gcmd.get_float('S', None, above=0.)
         # Use S for accel
-        accel = gcmd.get_float('S', None, above=0.)
+        # accel = gcmd.get_float('S', None, above=0.)
         cmd = "M204 S%s" % accel
         if accel is None:
             # Use minimum of P and T for accel

@@ -2,9 +2,9 @@
 M140 S60
 M105
 M190 S60
-M104 S210
+M104 S220
 M105
-M109 S210
+M109 S220
 M82 ;absolute extrusion mode
 G90
 G92 E0 ; Reset Extruder

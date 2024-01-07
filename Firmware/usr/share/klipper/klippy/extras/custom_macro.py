@@ -51,6 +51,7 @@ class CUSTOM_MACRO:
 
     cmd_CX_PRINT_DRAW_ONE_LINE_help = "Draw one line before printing"
     def cmd_CX_PRINT_DRAW_ONE_LINE(self, gcmd):
+        self.gcode.run_script_from_command('G28 X Y')
         self.gcode.run_script_from_command('M83')
         self.gcode.run_script_from_command('G1 X10 Y10 Z2 F6000')
         self.gcode.run_script_from_command('G1 Z0.1 F600')
@@ -123,6 +124,20 @@ class CUSTOM_MACRO:
     def cmd_SET_QMODE_FLAG(self, gcmd):
         self.qmode_flag =  gcmd.get_int('FLAG', default=1, minval=0, maxval=1)
         gcmd.respond_info("[cmd_SET_QMODE_FLAG] self.qmode_flag={}".format(self.qmode_flag))
+        import json, logging
+        try:
+            print_stats = self.printer.lookup_object('print_stats')
+            v_sd = self.printer.lookup_object('virtual_sdcard')
+            speed_mode_path = v_sd.speed_mode_path
+            if print_stats.state == "printing" and self.qmode_flag == 1:
+                result = {}
+                result["speed_mode"] = 2
+                with open(speed_mode_path, "w") as f:
+                    f.write(json.dumps(result))
+                    f.flush()
+        except Exception as err:
+            err_msg = "cmd_SET_QMODE_FLAG err %s" % str(err)
+            logging.error(err_msg)
         pass
 
 def load_config(config):
