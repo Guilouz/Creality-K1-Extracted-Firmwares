@@ -139,13 +139,36 @@ copy_config()
 
     esac
 
+    [ "x${config_dir}" = "x" ] && {
+        echo "config_dir is invalid!"
+        exit 0
+    }
+
+    CONFIG_PATH=/usr/share/klipper/config/${config_dir}
+
+    [ -d "${CONFIG_PATH}" ] || {
+        echo "config_dir is not exist!"
+        exit 0
+    }
+
     if [ -s $PRINTER_CONFIG_DIR/printer.cfg ]; then
         if [ -s $PRINTER_CONFIG_DIR/printer_params.cfg ]; then
             echo "no need to update custom config files"
+
+            [ -f $PRINTER_CONFIG_DIR/sensorless.cfg ] || {
+                echo "no sensorless.cfg, so copy"
+                cp -af ${CONFIG_PATH}/sensorless.cfg $PRINTER_CONFIG_DIR/
+                sync
+            }
+
+            [ -f $PRINTER_CONFIG_DIR/gcode_macro.cfg ] || {
+                echo "no gcode_macro.cfg, so copy"
+                cp -af ${CONFIG_PATH}/gcode_macro.cfg $PRINTER_CONFIG_DIR/
+                sync
+            }
         else
             [ "x${config_dir}" != "x" -a -d "/usr/share/klipper/config/${config_dir}" ] && {
                 # keep printer.cfg
-                CONFIG_PATH=/usr/share/klipper/config/${config_dir}
                 ls "${CONFIG_PATH}"/*.cfg | grep -v printer.cfg | xargs -I {} cp -af {} $PRINTER_CONFIG_DIR/
                 sync
             }
@@ -154,13 +177,9 @@ copy_config()
         # update printer.cfg and keep SAVE_CONFIG section
         update_config "/usr/share/klipper/config/${config_dir}/printer.cfg" $PRINTER_CONFIG_DIR/printer.cfg
     else
-        CONFIG_PATH=/usr/share/klipper/config/${config_dir}
-        [ "x${config_dir}" != "x" -a -d "${CONFIG_PATH}" ] && {
-            cp -af "${CONFIG_PATH}"/*.cfg $PRINTER_CONFIG_DIR/
-            sync
-        }
+        cp -af "${CONFIG_PATH}"/*.cfg $PRINTER_CONFIG_DIR/
+        sync
     fi
-
     [ "x${gcode_dir}" != "x" -a -d /usr/share/klipper/gcodes/${gcode_dir} ] && {
         rsync -a /usr/share/klipper/gcodes/${gcode_dir}/* ${GCODE_FILES_DIR}/
         sync
