@@ -19,12 +19,8 @@ fi
 rfkill unblock wifi
 ifconfig wlan0 up
 
-SN_NUM=
 if [ "$wpa_conf" != "" ]; then
     wpa_supplicant -B -i wlan0 -c $wpa_conf &
-    # 获取sn号
-    SN_NUM=$(sh /usr/bin/get_sn_mac.sh sn 2>&1)
-    SN_NUM=${SN_NUM:0-4}
     #udhcpc -i wlan0 &
-    udhcpc -i wlan0 -x hostname:$(hostname)-${SN_NUM} &
+    udhcpc -i wlan0 -x hostname:$(hostname) &
 fi

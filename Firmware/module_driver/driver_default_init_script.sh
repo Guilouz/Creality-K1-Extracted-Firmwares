@@ -18,8 +18,10 @@ sh soc_dtrng.sh
 sh cywdhd.sh
 sh gt9xx_touch.sh
 sh hci_uart_h5_kernel_4_4_94.sh
-sh lcd_gc9503cv.sh
-sh lcd_st7701_9bit_spi.sh
+sh lcd_gc9503cv_ue_480_800.sh
+sh lcd_st7701_9bit_spi_dc_480_800.sh
+sh lcd_st7701_9bit_spi_pj_480_800.sh
+sh lcd_st7701_9bit_spi_tjc_480_800.sh
 sh soc_efuse.sh
 sh soc_mac_driver.sh
 sh soc_watchdog.sh

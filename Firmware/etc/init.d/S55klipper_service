@@ -83,6 +83,7 @@ copy_config()
 {
     local model=$(get_sn_mac.sh model)
     local board=$(get_sn_mac.sh board)
+    local pcba_test=$(get_sn_mac.sh pcba_test)
 
     case $model in
         "CR-K1")
@@ -109,11 +110,21 @@ copy_config()
             gcode_dir=K1
             ;;
 
-        "CR-K1 Max" | "K1 Max SE")
+        "CR-K1 Max")
             if [ "$board" = "CR4CU220812S11" ]; then
                 config_dir=K1_MAX_CR4CU220812S11
             elif [ "$board" = "CR4CU220812S12" ]; then
                 config_dir=K1_MAX_CR4CU220812S12
+            else
+                config_dir=
+            fi
+
+            gcode_dir=K1_Max
+            ;;
+
+        "K1 Max SE")
+            if [ "$board" = "CR4CU220812S12" ]; then
+                config_dir=K1_MAX_SE_CR4CU220812S12
             else
                 config_dir=
             fi
@@ -135,7 +146,6 @@ copy_config()
             [ "x${config_dir}" != "x" -a -d "/usr/share/klipper/config/${config_dir}" ] && {
                 # keep printer.cfg
                 CONFIG_PATH=/usr/share/klipper/config/${config_dir}
-                # cp -af `ls /usr/share/klipper/config/${config_dir}/*.cfg | grep -v printer.cfg | xargs` $PRINTER_CONFIG_DIR/
                 ls "${CONFIG_PATH}"/*.cfg | grep -v printer.cfg | xargs -I {} cp -af {} $PRINTER_CONFIG_DIR/
                 sync
             }
@@ -149,11 +159,17 @@ copy_config()
             cp -af "${CONFIG_PATH}"/*.cfg $PRINTER_CONFIG_DIR/
             sync
         }
+    fi
 
-        [ "x${gcode_dir}" != "x" -a -d /usr/share/klipper/gcodes/${gcode_dir} ] && {
-            find /usr/share/klipper/gcodes/${gcode_dir} -iname "*.gcode" -exec cp {} ${GCODE_FILES_DIR}/ \;
-            sync
-        }
+    [ "x${gcode_dir}" != "x" -a -d /usr/share/klipper/gcodes/${gcode_dir} ] && {
+        rsync -a /usr/share/klipper/gcodes/${gcode_dir}/* ${GCODE_FILES_DIR}/
+        sync
+    }
+
+    # overlay printer.cfg for pcba test
+    if [ "x$pcba_test" = "x1" ]; then
+        cp -af $PRINTER_CONFIG_DIR/factory_printer.cfg $PRINTER_CONFIG_DIR/printer.cfg && sync
+        mkdir -p /tmp/creality && touch /tmp/creality/factory_test
     fi
 }
 

@@ -625,7 +625,7 @@ class MCU:
         if msg == "Timer too close":
             logging.error("msg is Timer too close!!!")
             code_key_string = "key90"
-        elif msg == "Missed scheduling of next":
+        elif msg == "Missed scheduling of next ":
             code_key_string = "key91"
         elif msg == "ADC out of range":
             code_key_string = "key92"

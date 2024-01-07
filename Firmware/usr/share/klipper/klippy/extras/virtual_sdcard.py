@@ -212,9 +212,9 @@ class VirtualSD:
         if filename[0] == '/':
             filename = filename[1:]
         self._load_file(gcmd, filename, check_subdirs=True)
-        self.do_resume()
         reportInformation("key600", data={"filename": filename})
         self.record_print_history(str(self.current_file.name))
+        self.do_resume()
 
     def record_print_history(self, file_path=""):
         try:
@@ -222,6 +222,7 @@ class VirtualSD:
                 dir_path = os.path.dirname(file_path)
                 file_name = os.path.basename(file_path)
                 metadata_info = self.get_print_file_metadata(filename=file_name, filepath=dir_path)
+                self.layer_count = self.get_file_layer_count(self.current_file.name, metadata_info=metadata_info)
                 start_time = time.time()
                 self.print_id = str(start_time)
                 metadata = metadata_info.get("metadata", {})
@@ -484,11 +485,14 @@ class VirtualSD:
             logging.error(err)
         return result
     
-    def get_file_layer_count(self, filename):
+    def get_file_layer_count(self, filename, metadata_info=None):
         filename = filename.split("/")[-1]
         import math
         layer_count = 0
-        result = self.get_print_file_metadata(filename)
+        if metadata_info:
+            result = metadata_info
+        else:
+            result = self.get_print_file_metadata(filename, get_layer_count=True)
         if not result:
             return layer_count
         try:
@@ -539,12 +543,11 @@ class VirtualSD:
         logging.info("delay_photography status: delay_photography_switch:%s, location:%s, frame:%s, interval:%s" % (
             delay_photography_switch, location, frame, interval
         ))
-        self.layer_count = self.get_file_layer_count(self.current_file.name)
         bl24c16f = self.printer.lookup_object('bl24c16f') if "bl24c16f" in self.printer.objects and power_loss_switch else None
         eepromState = True
         try:
             sameFileName = False
-            if os.path.exists(self.print_file_name_path):
+            if self.is_continue_print and os.path.exists(self.print_file_name_path):
                 with open(self.print_file_name_path, "r") as f:
                     result = (json.loads(f.read()))
                     if result.get("file_path", "") == self.current_file.name:
@@ -554,59 +557,62 @@ class VirtualSD:
                         os.remove(self.print_file_name_path)
                         if power_loss_switch and bl24c16f:
                             bl24c16f.setEepromDisable()
-            eepromState = bl24c16f.checkEepromFirstEnable() if power_loss_switch and bl24c16f else True
-            if power_loss_switch and bl24c16f and not self.do_resume_status and sameFileName and not eepromState and self.is_continue_print:
-                with self.gcode.mutex:
-                    try:
-                        self.print_stats.note_start(info_path=self.print_file_name_path)
-                        self.is_continue_print = False
-                        logging.info("power_loss start do_resume...")
-                        logging.info("power_loss start print, filename:%s" % self.current_file.name)
-                        pos = bl24c16f.eepromReadHeader()
-                        logging.info("power_loss pos:%s" % pos)
-                        print_info = bl24c16f.eepromReadBody(pos)
-                        logging.info("power_loss print_info:%s" % str(print_info))
-                        self.file_position = int(print_info.get("file_position", 0))
-                        logging.info("power_loss file_position:%s" % self.file_position)
-                        self.layer = self.get_layer()
-                        gcode = self.printer.lookup_object('gcode')
-                        temperature = self.get_print_temperature(self.current_file.name)
-                        gcode.run_script_from_command("M140 S%s" % temperature[0])
-                        gcode.run_script_from_command("M109 S%s" % temperature[1])
-                        XYZE = self.getXYZE(self.current_file.name, self.file_position)
-                        logging.info("power_loss XYZE:%s, file_position:%s  " % (str(XYZE), self.file_position))
-                        if XYZE.get("Z") == 0:
-                            logging.error("power_loss gcode Z == 0 err")
-                            from subprocess import call
-                            if os.path.exists(self.print_file_name_path):
-                                os.remove(self.print_file_name_path)
-                            call("sync", shell=True)
-                            try:
-                                power_loss_switch = False
-                                if os.path.exists(self.user_print_refer_path):
-                                    with open(self.user_print_refer_path, "r") as f:
-                                        data = json.loads(f.read())
-                                        power_loss_switch = data.get("power_loss", {}).get("switch", False)
-                                bl24c16f = self.printer.lookup_object('bl24c16f') if "bl24c16f" in self.printer.objects else None
-                                if power_loss_switch and bl24c16f:
-                                    bl24c16f.setEepromDisable()
-                            except Exception as err:
-                                logging.error("power_loss gcode Z == 0: %s" % err)
-                            error_message = "power_loss gcode Z == 0, stop print"
-                            self.print_stats.note_error(error_message)
-                            raise
-                        gcode_move.cmd_CX_RESTORE_GCODE_STATE(print_info, self.print_file_name_path, XYZE)
-                        logging.info("power_loss end do_resume success")
-                        self.print_stats.power_loss = 0
-                        if self.layer > 1:
-                            self.slow_print = True
-                            self.slow_count = self.layer + 1
-                            self.speed_factor = gcode_move.speed_factor
-                            self.gcode.run_script_from_command("M220 S20")
-                            logging.info("power_loss slow_print M220 S20 SET")
-                    except Exception as err:
-                        self.print_stats.power_loss = 0
-                        logging.error(err)
+            if power_loss_switch and self.is_continue_print and not self.do_resume_status and sameFileName and bl24c16f:
+                eepromState = bl24c16f.checkEepromFirstEnable() if power_loss_switch and bl24c16f else True
+                if not eepromState:
+                    with self.gcode.mutex:
+                        try:
+                            self.print_stats.note_start(info_path=self.print_file_name_path)
+                            self.is_continue_print = False
+                            logging.info("power_loss start do_resume...")
+                            logging.info("power_loss start print, filename:%s" % self.current_file.name)
+                            pos = bl24c16f.eepromReadHeader()
+                            logging.info("power_loss pos:%s" % pos)
+                            print_info = bl24c16f.eepromReadBody(pos)
+                            logging.info("power_loss print_info:%s" % str(print_info))
+                            self.file_position = int(print_info.get("file_position", 0))
+                            logging.info("power_loss file_position:%s" % self.file_position)
+                            self.layer = self.get_layer()
+                            gcode = self.printer.lookup_object('gcode')
+                            temperature = self.get_print_temperature(self.current_file.name)
+                            gcode.run_script_from_command("M140 S%s" % temperature[0])
+                            gcode.run_script_from_command("M109 S%s" % temperature[1])
+                            XYZE = self.getXYZE(self.current_file.name, self.file_position)
+                            logging.info("power_loss XYZE:%s, file_position:%s  " % (str(XYZE), self.file_position))
+                            if XYZE.get("Z") == 0:
+                                logging.error("power_loss gcode Z == 0 err")
+                                from subprocess import call
+                                if os.path.exists(self.print_file_name_path):
+                                    os.remove(self.print_file_name_path)
+                                call("sync", shell=True)
+                                try:
+                                    power_loss_switch = False
+                                    if os.path.exists(self.user_print_refer_path):
+                                        with open(self.user_print_refer_path, "r") as f:
+                                            data = json.loads(f.read())
+                                            power_loss_switch = data.get("power_loss", {}).get("switch", False)
+                                    bl24c16f = self.printer.lookup_object('bl24c16f') if "bl24c16f" in self.printer.objects else None
+                                    if power_loss_switch and bl24c16f:
+                                        bl24c16f.setEepromDisable()
+                                except Exception as err:
+                                    logging.error("power_loss gcode Z == 0: %s" % err)
+                                error_message = "power_loss gcode Z == 0, stop print"
+                                self.print_stats.note_error(error_message)
+                                raise
+                            gcode_move.cmd_CX_RESTORE_GCODE_STATE(print_info, self.print_file_name_path, XYZE)
+                            logging.info("power_loss end do_resume success")
+                            self.print_stats.power_loss = 0
+                            if self.layer > 1:
+                                self.slow_print = True
+                                self.slow_count = self.layer + 1
+                                self.speed_factor = gcode_move.speed_factor
+                                self.gcode.run_script_from_command("M220 S20")
+                                logging.info("power_loss slow_print M220 S20 SET")
+                        except Exception as err:
+                            self.print_stats.power_loss = 0
+                            logging.error(err)
+                else:
+                    self.gcode.run_script("G90")
             else:
                 self.gcode.run_script("G90")
         except Exception as err:
@@ -677,7 +683,7 @@ class VirtualSD:
             if self.count_line % 999 == 0:
                 self.update_print_history_info()
             try:
-                if power_loss_switch and bl24c16f and (self.layer > 2 or gcode_move.last_position[2] > 3) and self.count_line % 99 == 0:
+                if power_loss_switch and bl24c16f and (self.layer > 2 or (self.count_G1 > 18 and gcode_move.last_position[2] > 0.6)) and self.count_line % 99 == 0:
                     base_position_e = round(list(gcode_move.base_position)[-1], 2)
                     pos = bl24c16f.eepromReadHeader()
                     if eepromState:
@@ -732,6 +738,7 @@ class VirtualSD:
                     if line.startswith(layer_key):
                         self.layer += 1
                         self.record_layer(self.layer)
+                        break
                 if self.print_first_layer and self.count_G1 >= 20:
                     for layer_key in LAYER_KEYS:
                         if line.startswith(layer_key):

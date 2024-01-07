@@ -175,7 +175,8 @@ auto_update()
 
             if [ -e $mcu0_serial -a -e $bed0_serial -a -e $noz0_serial ]; then
 
-                if [ "$model" = "CR-K1" -o "$model" = "CR-K1 Max" ]; then
+                if [ "$model" = "CR-K1" -o "$model" = "K1C" \
+                    -o "$model" = "CR-K1 Max" -o "$model" = "K1 Max SE" ]; then
                     fw_dir=K1
                 else
                     fw_dir=
