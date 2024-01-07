@@ -1,0 +1,20 @@
+#!/bin/sh
+
+PROG=/usr/bin/wipe_data
+
+[ -x $PROG ] || {
+    echo "not found $PROG!"
+    exit 1
+}
+
+case "$1" in
+    start)
+        $PROG &
+        ;;
+    *)
+        echo "Usage: $0 {start}"
+        exit 1
+esac
+
+exit $?
+

@@ -1,0 +1,44 @@
+#!/bin/sh
+#
+# Start wifi
+#
+
+check_macaddr() {
+
+	if [ -f /usr/data/macaddr.txt ]; then
+		macaddr=`cat /usr/data/macaddr.txt`
+	fi
+
+	wlan0_mac=`ifconfig -a | grep "wlan0"`
+
+	# 提取HWaddr后面字符串
+	wlan0_mac=${wlan0_mac##*HWaddr}
+
+	# 大写转小写
+	wlan0_mac=`echo $wlan0_mac | tr '[A-Z]' '[a-z]'`
+	macaddr=`echo $macaddr | tr '[A-Z]' '[a-z]'`
+
+	if [ "$macaddr" != "$wlan0_mac" ]; then
+		sh /etc/init.d/S43wifi_bcm_init_config start
+	fi
+}
+
+case "$1" in
+	start)
+
+		# 打开wifi
+		wifi_up.sh
+
+		# 校验macaddr
+		check_macaddr
+	;;
+
+	stop)
+	;;
+  *)
+	echo "Usage: $0 {start|stop}"
+	exit 1
+
+esac
+
+exit $?

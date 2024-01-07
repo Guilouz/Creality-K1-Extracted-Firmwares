@@ -1,0 +1,46 @@
+#!/bin/sh
+
+jpeg_display()
+{
+    while true
+    do
+        if [ -e "/dev/fb0" ]; then
+            break
+        fi
+        sleep 0.02
+    done
+
+    theme="creality"
+    width=$(get_fb_info.sh width)
+    height=$(get_fb_info.sh height)
+    model=$(get_sn_mac.sh model)
+
+    case $model in
+        "CR-K1" | "K1C")
+            logofile=${theme}_landscape_rot180_${width}x${height}.jpg
+            ;;
+
+        "CR-K1 Max" | "K1 Max SE")
+            logofile=${theme}_landscape_rot180_${width}x${height}.jpg
+            ;;
+
+        *)
+            logofile=test.jpeg
+            ;;
+
+    esac
+
+    cmd_jpeg_display /etc/logo/$logofile
+
+}
+
+case "$1" in
+    start)
+        jpeg_display &
+
+    ;;
+    *)
+        exit 1
+esac
+
+exit 0

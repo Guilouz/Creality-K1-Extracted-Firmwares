@@ -1,0 +1,117 @@
+#!/bin/sh
+#
+#  config wifi
+#
+
+#!/bin/sh
+
+# 获取mac地址函数
+getmac() {
+    # 从烧录的MAC分区读取
+    macaddr=`get_burn_partition_macaddr.sh`
+    if [ $? = 0 ]; then
+        echo "${macaddr:0:2}:${macaddr:2:2}:${macaddr:4:2}:${macaddr:6:2}:${macaddr:8:2}:${macaddr:10:2}"
+        return 0
+    fi
+
+    # 从usr/data/macaddr.txt中获取
+    if [ -f /usr/data/macaddr.txt ]; then
+
+        macaddr=$(cat /usr/data/macaddr.txt | sed 's/[^0-9|a-z]//g')
+
+        # 检验macaddr.txt mac地址
+        if [ "${#macaddr}" == "12" ]; then
+            echo "${macaddr:0:2}:${macaddr:2:2}:${macaddr:4:2}:${macaddr:6:2}:${macaddr:8:2}:${macaddr:10:2}"
+            return 0
+        fi
+
+        echo "macaddr.txt file get macaddr fail" 1>&2
+        echo "example: 00:11:22:33:44:55" 1>&2
+
+    fi
+
+    # 从efuse chip_id中获取
+    if [ -f /sys/class/misc/efuse-string-version/dev ]; then
+        macaddr=$(cmd_efuse read CHIP_ID | sed 's/[^0-9|a-z]//g')
+        echo "d0:31:10:${macaddr:0:2}:${macaddr:2:2}:${macaddr:4:2}"
+        return 0
+    fi
+
+    # 从随机数中获取
+    if [ -f /proc/sys/kernel/random/uuid ]; then
+        macaddr=$(cat /proc/sys/kernel/random/uuid | sed 's/[^0-9|a-z]//g')
+        echo "d0:31:10:${macaddr:0:2}:${macaddr:2:2}:${macaddr:4:2}"
+        return 0
+    fi
+
+    echo "please open random or efuse function" 1>&2
+
+    exit 1
+}
+
+set_wifi_mac(){
+	# 判断wlan0是否打开
+	count=0
+	while [ ! -e "/sys/class/net/wlan0/address" ]; do
+		if [ "$count" != "100" ]; then
+			let count=count+1;
+			sleep 0.03;
+		else
+			exit 1;
+		fi
+	done
+
+	wpa_conf=/usr/data/wpa_supplicant.conf
+	if [ ! -f $wpa_conf ]; then
+		echo "ctrl_interface=/var/run/wpa_supplicant" > $wpa_conf
+		echo "update_config=1" >> $wpa_conf
+		echo "country=GB" >> $wpa_conf
+
+	fi
+
+	# 获取mac地址
+	macaddr=`getmac`
+
+	echo "MAC $macaddr" 1>&2
+
+	# 保存mac地址,下次上电直接从macaddr.txt中读取
+	if [ ! -f /usr/data/macaddr.txt ]; then
+		echo "$macaddr" > /usr/data/macaddr.txt
+	fi
+
+	ifconfig wlan0 hw ether $macaddr
+
+	# 判断wlan1是否打开
+	ifconfig -a | grep wlan1 > /dev/null
+	if [ $? -eq 0 ]; then
+		ifconfig wlan1 hw ether $(echo -n D2 && echo -n ${macaddr:2})
+	fi
+
+	if [ -e /sys/module/cywdhd/parameters/bcm_mac_address ]; then
+		echo $macaddr > /sys/module/cywdhd/parameters/bcm_mac_address
+	fi
+
+	if [ -e /sys/module/bcmdhd/parameters/bcm_mac_address ]; then
+		echo $macaddr > /sys/module/bcmdhd/parameters/bcm_mac_address
+	fi
+}
+
+
+case "$1" in
+	start)
+		# 设置mac地址
+		set_wifi_mac
+	;;
+
+	stop)
+		# 关闭wifi
+		wifi_down.sh
+	;;
+  *)
+
+	echo "Usage: $0 {start|stop}"
+	exit 1
+
+esac
+
+exit $?

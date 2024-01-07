@@ -1,0 +1,12 @@
+
+ACTION!="add", GOTO="exit"
+SUBSYSTEM!="block", GOTO="exit"
+KERNEL=="mmcblk[1-9]p[0-9]", ENV{MDEV}="%k", RUN+="/etc/auto_mount_sdcard.sh %k"
+KERNEL=="mmcblk[1-9]", ENV{MDEV}="%k", RUN+="/etc/auto_mount_sdcard.sh %k"
+LABEL="exit"
+
+ACTION !="remove", GOTO="exit"
+SUBSYSTEM!="block", GOTO="exit"
+KERNEL=="mmcblk[1-9]p[0-9]", ENV{MDEV}="%k", RUN+="/etc/auto_mount_sdcard.sh %k"
+KERNEL=="mmcblk[1-9]", ENV{MDEV}="%k", RUN+="/etc/auto_mount_sdcard.sh %k"
+LABEL="exit"

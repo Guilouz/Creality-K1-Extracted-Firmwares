@@ -1,0 +1,43 @@
+#!/bin/sh
+#
+# Starts ubusd service.
+#
+
+PROG=/usr/sbin/ubusd
+PID_FILE=/var/run/ubusd.pid
+
+start() {
+    printf "Starting ubusd service: "
+
+    start-stop-daemon -S -b -m -p $PID_FILE \
+        --exec $PROG
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+stop() {
+    printf "Stopping ubusd service: "
+
+    start-stop-daemon -K -p $PID_FILE
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+restart() {
+    stop
+    sleep 1
+    start
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart|reload)
+        restart
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+
+exit $?

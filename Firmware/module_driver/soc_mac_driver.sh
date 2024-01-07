@@ -1,0 +1,3 @@
+insmod soc_mac_driver.ko mac0_enable_flag=1 mac0_phy_interface=0 mac0_enable_crystal_clk=1 mac0_enable_tx_clk=0 mac0_tx_clk_rate=0 mac0_tx_clk_enable_delay=0 mac0_phy_probe_mask=0x0 mac0_phy_reset_gpio=PC05 mac0_phy_reset_level=0 mac0_phy_reset_time_us=200000 mac0_rx_clk_delay=0  mac0_tx_clk_delay=0  mac0_enable_virtual_phy=0 \
+mac1_enable_flag=0 mac1_phy_interface=0 mac1_enable_crystal_clk=0 mac1_enable_tx_clk=0 mac1_tx_clk_rate=0 mac1_tx_clk_enable_delay=0 mac1_phy_probe_mask=0 mac1_phy_reset_gpio=-1 mac1_phy_reset_level=0 mac1_phy_reset_time_us=0 mac1_rx_clk_delay=0  mac1_tx_clk_delay=0  mac1_enable_virtual_phy=0 \
+phy_clk_rate=0 phy_clk_delay_us=0 

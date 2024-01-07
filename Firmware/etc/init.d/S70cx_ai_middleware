@@ -1,0 +1,54 @@
+#!/bin/sh
+#
+# Starts cx_ai_middleware service.
+#
+
+PROG=/usr/bin/cx_ai_middleware
+PID_FILE=/var/run/cx_ai_middleware.pid
+FLAG_FILE=/tmp/.laser_updating
+
+start() {
+
+    while true
+    do
+        if [ -e $FLAG_FILE ]; then
+            sleep 0.2
+        else
+            break
+        fi
+    done
+
+    printf "Starting cx_ai_middleware service: "
+
+    start-stop-daemon -S -b -m -p $PID_FILE \
+        --exec $PROG
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+stop() {
+    printf "Stopping cx_ai_middleware service: "
+
+    start-stop-daemon -K -p $PID_FILE
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+restart() {
+    stop
+    sleep 1
+    start
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart|reload)
+        restart
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+
+exit $?

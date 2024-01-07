@@ -1,0 +1,12 @@
+
+ACTION!="add", GOTO="exit"
+SUBSYSTEM!="block", GOTO="exit"
+KERNEL=="sd[a-z][0-9]", ENV{MDEV}="%k", RUN+="/etc/auto_mount_udisk.sh %k"
+KERNEL=="sd[a-z]", ENV{MDEV}="%k", RUN+="/etc/auto_mount_udisk.sh %k"
+LABEL="exit"
+
+ACTION !="remove", GOTO="exit"
+SUBSYSTEM!="block", GOTO="exit"
+KERNEL=="sd[a-z][0-9]", ENV{MDEV}="%k", RUN+="/etc/auto_mount_udisk.sh %k"
+KERNEL=="sd[a-z]", ENV{MDEV}="%k", RUN+="/etc/auto_mount_udisk.sh %k"
+LABEL="exit"

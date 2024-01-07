@@ -1,0 +1,52 @@
+#!/bin/sh
+
+SWAP_FILE=/usr/data/swap
+# 128MB
+SWAP_SIZE=128
+
+create_swap(){
+    dd if=/dev/zero of=$SWAP_FILE bs=1M count=$SWAP_SIZE
+    chmod 0600 $SWAP_FILE
+    mkswap $SWAP_FILE
+    sync
+}
+
+start_server(){
+
+    [ -f $SWAP_FILE ] || create_swap
+
+    echo 10 > /proc/sys/vm/swappiness
+    swapon $SWAP_FILE
+
+    [ $? != 0 ] && {
+        rm -f $SWAP_FILE
+        create_swap
+        swapon $SWAP_FILE
+    }
+
+}
+
+stop_server(){
+
+    [ -f $SWAP_FILE ] && swapoff $SWAP_FILE
+
+}
+
+case "$1" in
+    start)
+        start_server
+        ;;
+    stop)
+        stop_server
+        ;;
+    restart|reload)
+        "$0" stop
+        "$0" start
+        ;;
+    *)
+        echo "Usage:"
+        echo "    $0 {start|stop|restart}"
+        exit 1
+esac
+
+exit $?

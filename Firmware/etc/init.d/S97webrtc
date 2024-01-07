@@ -1,0 +1,105 @@
+#!/bin/sh
+#
+# Starts WebRTC service.
+#
+
+USER_DATA=/usr/data
+PROG=/usr/bin/webrtc
+INVALID_DEVICE_NUM=00000000000000
+# 0: dev; 1: normal
+ENV_NUM=0
+PID_FILE=/var/run/webrtc.pid
+CONFIG_FILE=/usr/data/creality/userdata/config/system_config.json
+
+get_env_num() {
+    if [ -e $CONFIG_FILE ]; then
+        val=$(jq .user_info.deploy_setting $CONFIG_FILE)
+        if [ "x$val" != "xnull" ]; then
+            case $val in
+                "0")
+                    env_num=0
+                ;;
+                "1")
+                    env_num=1
+                ;;
+                "2")
+                    env_num=2
+                ;;
+                "3")
+                    env_num=3
+                ;;
+                "4")
+                    env_num=4
+                ;;
+                "5")
+                    env_num=0
+                ;;
+                "6")
+                    env_num=5
+                ;;
+                *)
+                    env_num=0
+                ;;
+            esac
+        else
+            env_num=0
+        fi
+    else
+        env_num=0
+    fi
+
+    echo $env_num
+}
+
+start() {
+    printf "Starting WebRTC service: "
+
+    if [ "x$SERVER_NUM" != "x" ]; then
+        ENV_NUM=$SERVER_NUM
+    else
+        ENV_NUM=$(get_env_num)
+    fi
+
+    DEVICE_NUM=$(/usr/bin/get_sn_mac.sh sn)
+    if [ "x$DEVICE_NUM" = "x" -o "x$DEVICE_NUM" = "x$INVALID_DEVICE_NUM" ]; then
+        printf "Invalid DEVICE_NUM: $DEVICE_NUM !\n"
+        return
+    else
+        printf "Valid DEVICE_NUM: $DEVICE_NUM , "
+    fi
+
+    start-stop-daemon -S -b -m -p $PID_FILE \
+        --exec $PROG -- $DEVICE_NUM \
+        $ENV_NUM
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+stop() {
+    printf "Stopping WebRTC service: "
+
+    start-stop-daemon -K -p $PID_FILE
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+restart() {
+    stop
+    sleep 1
+    start
+}
+
+echo "SERVER_NUM: $SERVER_NUM"
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart|reload)
+        restart
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+
+exit $?

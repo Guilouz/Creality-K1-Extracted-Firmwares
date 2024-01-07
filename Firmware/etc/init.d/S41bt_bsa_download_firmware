@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# Start the download blue firmware....
+#
+
+case "$1" in
+  start)
+  /usr/bin/bt_enable_bsa.sh &
+  ;;
+  *)
+        exit 1
+esac
+
+exit $?
+

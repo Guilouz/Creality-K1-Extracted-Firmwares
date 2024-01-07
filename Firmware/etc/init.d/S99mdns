@@ -1,0 +1,26 @@
+#! /bin/sh
+APP_NAME=/usr/bin/mdns
+APP_ARGS=" --service  _Creality-`get_sn_mac.sh sn`._udp.local --port 5353  --hostname `hostname`"
+PIDFILE=/var/run/mdns.pid
+
+case "$1" in
+  start)
+     echo "Starting mdns..."
+	 [ -f $PIDFILE ] && rm $PIDFILE
+     start-stop-daemon -S -b -m -p $PIDFILE --exec $APP_NAME -- $APP_ARGS
+     [ $? = 0 ] && echo "OK" || echo "FAIL"
+      ;;
+  stop)
+      echo "Stopping mdns..."
+      start-stop-daemon -K -p $PIDFILE
+      [ $? = 0 ] && echo "OK" || echo "FAIL"
+      ;;
+  restart)
+     "$0" stop
+     sleep 1
+     "$0" start
+     ;;
+  *)
+     echo "Usage: $0 {start|stop|restart|reload|force-reload}"
+     exit 1
+esac

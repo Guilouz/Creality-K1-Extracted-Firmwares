@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# Starts board_init service.
+#
+
+USB_HOST_5V_ENABLE=/usr/bin/usb_host_5v_enable.sh
+
+gpio_init()
+{
+    [ -x ${USB_HOST_5V_ENABLE} ] && . ${USB_HOST_5V_ENABLE}
+}
+
+case "$1" in
+    start)
+        gpio_init
+        ;;
+    *)
+        echo "Usage: $0 {start}"
+        exit 1
+esac
+
+exit $?

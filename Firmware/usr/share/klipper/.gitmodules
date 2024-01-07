@@ -1,0 +1,3 @@
+[submodule "src/bootloader"]
+	path = src/bootloader
+	url = git@172.23.88.26:wangcong/klipperbootloader.git

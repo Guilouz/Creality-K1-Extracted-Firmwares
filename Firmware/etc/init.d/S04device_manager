@@ -1,0 +1,43 @@
+#!/bin/sh
+#
+# Starts device_manager service.
+#
+
+PROG=/usr/bin/device_manager
+PID_FILE=/var/run/device_manager.pid
+
+start() {
+    printf "Starting device_manager service: "
+
+    start-stop-daemon -S -b -m -p $PID_FILE \
+        --exec $PROG
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+stop() {
+    printf "Stopping device_manager service: "
+
+    start-stop-daemon -K -p $PID_FILE
+    [ $? = 0 ] && echo "OK" || echo "FAIL"
+}
+restart() {
+    stop
+    sleep 1
+    start
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    restart|reload)
+        restart
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart}"
+        exit 1
+esac
+
+exit $?
