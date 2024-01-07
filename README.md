@@ -4,7 +4,7 @@
 
 ## About
 
-You can find the firmware contents of each version here.
+You can find the firmware contents of each version [here](https://github.com/Guilouz/Creality-K1-Extracted-Firmwares/commits/main/).
 
 <br />
 
