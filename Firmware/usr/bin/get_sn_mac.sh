@@ -13,7 +13,7 @@ BLK_NUM=$(fdisk -l | grep 'sn_mac' | awk '{print $1}')
 BLK=/dev/mmcblk0p${BLK_NUM}
 
 # 读取SN_MAC分区号的内容(格式:"sn"14 + ';' + "mac"12 + ';' + 上位机 + ';' + 主板型号 + ';' +
-# PCBA厂测标志 + ';' + 3个预留)
+# PCBA厂测标志 + ';' + 整机SN + ';' + 2个预留)
 tmp=$(dd if=${BLK} count=1 2>/dev/null)
 
 # sn
@@ -34,6 +34,10 @@ BOARD=${tmp%%;*}
 tmp=${tmp#*;}
 # pcba_test
 PCBA_TEST=${tmp%%;*}
+# 去掉pcba_test
+tmp=${tmp#*;}
+# machine sn
+MACHINE_SN=${tmp%%;*}
 
 # sn校验 -- 长度14，由0-9a-fA-F组成
 check_sn()
@@ -103,6 +107,12 @@ elif [ $PARAM = "board" ]; then
 elif [ $PARAM = "pcba_test" ]; then
     if [ "x$PCBA_TEST" = "x1" ]; then
        echo "1"
+    else
+       echo "0"
+    fi
+elif [ $PARAM = "machine_sn" ]; then
+    if [ "x$MACHINE_SN" != "x" ]; then
+       echo "$MACHINE_SN"
     else
        echo "0"
     fi
