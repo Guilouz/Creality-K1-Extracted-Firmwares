@@ -38,6 +38,10 @@ PCBA_TEST=${tmp%%;*}
 tmp=${tmp#*;}
 # machine sn
 MACHINE_SN=${tmp%%;*}
+# 去掉machine sn
+tmp=${tmp#*;}
+# structure version
+STRUCTURE_VERSION=${tmp%%;*}
 
 # sn校验 -- 长度14，由0-9a-fA-F组成
 check_sn()
@@ -113,6 +117,12 @@ elif [ $PARAM = "pcba_test" ]; then
 elif [ $PARAM = "machine_sn" ]; then
     if [ "x$MACHINE_SN" != "x" ]; then
        echo "$MACHINE_SN"
+    else
+       echo "0"
+    fi
+elif [ $PARAM = "structure_version" ]; then
+    if [ "x$STRUCTURE_VERSION" = "x1" ]; then
+       echo "1"
     else
        echo "0"
     fi

@@ -64,6 +64,7 @@ class VirtualSD:
         self.run_dis = 0.0
         self.print_id = ""
         self.cur_print_data = {}
+        self.layer_key = ""
     def handle_shutdown(self):
         if self.work_timer is not None:
             self.must_pause_work = True
@@ -206,6 +207,7 @@ class VirtualSD:
         "include files in subdirectories."
     def cmd_SDCARD_PRINT_FILE(self, gcmd):
         self.print_id = ""
+        self.layer_key = ""
         if self.work_timer is not None:
             raise gcmd.error("SD busy")
         self._reset_file()
@@ -792,8 +794,11 @@ class VirtualSD:
                         self.gcode.run_script("EEPROM_WRITE_BYTE ADDR=1 VAL=255")
                 for layer_key in LAYER_KEYS:
                     if line.startswith(layer_key):
-                        self.layer += 1
-                        self.record_layer(self.layer)
+                        if not self.layer_key:
+                            self.layer_key = layer_key
+                        if line.startswith(self.layer_key):
+                            self.layer += 1
+                            self.record_layer(self.layer)
                         break
                 if self.print_first_layer and self.count_G1 >= 20:
                     for layer_key in LAYER_KEYS:

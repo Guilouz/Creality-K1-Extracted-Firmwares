@@ -86,6 +86,7 @@ copy_config()
     local model=$(get_sn_mac.sh model)
     local board=$(get_sn_mac.sh board)
     local pcba_test=$(get_sn_mac.sh pcba_test)
+    local structure_version=$(get_sn_mac.sh structure_version)
 
     case $model in
         "CR-K1")
@@ -115,8 +116,10 @@ copy_config()
         "CR-K1 Max")
             if [ "$board" = "CR4CU220812S11" ]; then
                 config_dir=K1_MAX_CR4CU220812S11
-            elif [ "$board" = "CR4CU220812S12" ]; then
+            elif [ "$board" = "CR4CU220812S12" -a "$structure_version" = "0" ]; then
                 config_dir=K1_MAX_CR4CU220812S12
+            elif [ "$board" = "CR4CU220812S12" -a "$structure_version" = "1" ]; then
+                config_dir=K1_MAX_CR4CU220812S12_1
             else
                 config_dir=
             fi
