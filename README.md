@@ -1,6 +1,6 @@
 # Creality K1 Series Extracted Firmwares
 
-<img width="1102" src="https://github.com/Guilouz/Creality-K1-and-K1-Max/blob/main/images/Home/Home.png">
+<img width="1102" src="https://github.com/Guilouz/Creality-K1-Series/blob/main/docs/assets/img/home/home.png">
 
 ## About
 
