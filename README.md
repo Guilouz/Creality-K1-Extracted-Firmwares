@@ -22,6 +22,8 @@ You can find the firmware changes for each version:
 
 - [Changes from **1.3.3.5** to **1.3.3.8**](https://github.com/Guilouz/Creality-K1-Extracted-Firmwares/commit/89e4473f54320d8f2cecf96c4737e09000c98e8d)
 
+- [Changes from **1.3.3.8** to **1.3.3.26**](https://github.com/Guilouz/Creality-K1-Extracted-Firmwares/commit/108dd6d96654577f224a95e34e864944549d04b3)
+
 <br />
 
 ## Credits
