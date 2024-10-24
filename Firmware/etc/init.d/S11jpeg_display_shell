@@ -16,7 +16,7 @@ jpeg_display()
     model=$(get_sn_mac.sh model)
 
     case $model in
-        "CR-K1" | "K1C")
+        "CR-K1" | "K1C" | "K1 SE")
             logofile=${theme}_landscape_rot180_${width}x${height}.jpg
             ;;
 

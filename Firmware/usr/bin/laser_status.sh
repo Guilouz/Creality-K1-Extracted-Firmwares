@@ -1,8 +1,13 @@
 #!/bin/sh
 
+. /usr/share/libubox/jshn.sh
+
 FW_PATH=/usr/share/laser/fw
 LOG_FILE=/tmp/laser_update.log
 FLAG_FILE=/tmp/.laser_updating
+INFO_FILE=/usr/data/creality/userdata/config/laser_info.json
+PWR_FILE=/usr/bin/laser_power.sh
+LOAD_DONE=/tmp/load_done
 
 NO_REPORT=0
 DO_REPORT=1
@@ -42,13 +47,37 @@ update_fw()
     fi
 }
 
-#echo "MDEV=$MDEV ; ACTION=$ACTION ; DEVPATH=$DEVPATH" > /dev/console
+#echo "MDEV=$MDEV ; ACTION=$ACTION ; DEVPATH=$DEVPATH ; ID_PATH_TAG=$ID_PATH_TAG" > /dev/console
 
 case "${ACTION}" in
 add)
     ret=$(update_fw)
     if [ $ret -eq $DO_REPORT ]; then
         ubus call laser set_state '{"laser_plugged": 1}'
+
+        case $ID_PATH_TAG in
+            platform-13500000_otg_new-usb-0_1_1*)
+                power_en_pin="PA14"
+            ;;
+
+            platform-13500000_otg_new-usb-0_1_2*)
+                power_en_pin="PA15"
+            ;;
+
+            platform-13500000_otg_new-usb-0_1_3*)
+                power_en_pin="PA16"
+            ;;
+        esac
+
+        json_init
+        json_add_object "laser"
+        json_add_string "power_en_pin" $power_en_pin
+        json_close_object
+        json_dump > $INFO_FILE
+        json_cleanup
+        sync
+
+#        [ -f $LOAD_DONE ] || $PWR_FILE off
     fi
     ;;
 remove)

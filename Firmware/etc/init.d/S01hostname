@@ -17,6 +17,9 @@ set_hostname_with_model_mac()
             "K1C")
                 model="K1C"
                 ;;
+            "K1 SE")
+                model="K1SE"
+                ;;
             "CR-K1 Max")
                 model="K1Max"
                 ;;
